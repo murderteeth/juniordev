@@ -1,0 +1,37 @@
+{
+  "name": "juniordev",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:ngrok": "ngrok http 3000 & next dev & wait",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "common-tags": "^1.8.2",
+    "jsonwebtoken": "^9.0.2",
+    "next": "14.2.3",
+    "node-telegram-bot-api": "^0.65.1",
+    "openai": "^4.47.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/common-tags": "^1.8.4",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20",
+    "@types/node-telegram-bot-api": "^0.64.6",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
+    "ngrok": "^5.0.0-beta.2",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
