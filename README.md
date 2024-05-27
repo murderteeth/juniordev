@@ -1,5 +1,7 @@
-# JuniorDev
-Dev bot for all your grunt work
+# juniordev
+Telegram dev bot for all your dirty work
+
+![juniordev](https://github.com/murderteeth/juniordev/assets/89237203/a910682a-cdb5-484f-bbc2-71cdb5637616)
 
 ### setup
 1 - install
