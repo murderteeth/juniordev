@@ -1,5 +1,6 @@
 export const maxDuration = 60
 
+import '@/lib/global'
 import { NextRequest, NextResponse } from 'next/server'
 import TelegramBot from 'node-telegram-bot-api'
 import { Chat, TelegramWebHookSchema } from './types'
