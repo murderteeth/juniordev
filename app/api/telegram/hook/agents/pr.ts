@@ -1,6 +1,8 @@
 import { createCommit, fetchGhRaw, fetchInstallToken, newBranch, pullRequest } from '@/lib/gh'
 import OpenAI from 'openai'
-import { TelegramWebHook } from '../types'
+import { Chat } from '@/lib/types'
+import { hasCommands } from '@/lib/commands'
+import { parseMessages } from './setup'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -129,12 +131,15 @@ async function complete(messages: OpenAI.ChatCompletionMessageParam[]) {
 }
 
 const MAX_TOOL_STEPS = 4
-async function completeUntilDone(messages: OpenAI.ChatCompletionMessageParam[]) {
+async function completeUntilDone(chat: Chat) {
+  let messages = parseMessages(chat.hooks)
+  console.log('messages', messages)
+
   let steps = 0
   let completion = await complete(messages)
   while (completion.finish_reason === 'tool_calls') {
     console.log('COMPLETE', 'steps', steps)
-    if (steps >= MAX_TOOL_STEPS) { throw new Error('a step too many!') }
+    if (steps >= MAX_TOOL_STEPS) { throw new Error('a step too far!') }
 
     const tool_responses: OpenAI.ChatCompletionToolMessageParam[] = []
     for (const tool_call of completion.message.tool_calls!) {
@@ -158,9 +163,9 @@ async function completeUntilDone(messages: OpenAI.ChatCompletionMessageParam[]) 
   return completion
 }
 
-export async function respond(hook: TelegramWebHook) {
-  if (!hook.message?.text.startsWith('/jr ')) { return undefined }
-  const content = hook.message.text.replace('/jr ', '')
-  const completion = await completeUntilDone([{ role: 'user', content }])
+export async function respond(chat: Chat) {
+  const latestHook = chat.hooks[chat.hooks.length - 1]
+  if (!hasCommands(latestHook)) { return undefined }
+  const completion = await completeUntilDone(chat)
   return completion?.message.content ?? 'idk! 😻'
 }

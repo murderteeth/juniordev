@@ -1,16 +1,5 @@
 import { z } from 'zod'
 
-export const ChatSchema = z.object({
-  id: z.bigint({ coerce: true }),
-  github_repo_owner: z.string().nullish(),
-  github_repo_name: z.string().nullish(),
-  messages: z.array(z.string()),
-  created_at: z.date(),
-  updated_at: z.date()
-})
-
-export type Chat = z.infer<typeof ChatSchema>
-
 export const TelegramMessageSchema = z.object({
   message_id: z.bigint({ coerce: true }),
   from: z.object({
@@ -37,3 +26,14 @@ export const TelegramWebHookSchema = z.object({
 })
 
 export type TelegramWebHook = z.infer<typeof TelegramWebHookSchema>
+
+export const ChatSchema = z.object({
+  id: z.bigint({ coerce: true }),
+  github_repo_owner: z.string().optional(),
+  github_repo_name: z.string().optional(),
+  hooks: TelegramWebHookSchema.array(),
+  created_at: z.date(),
+  updated_at: z.date()
+})
+
+export type Chat = z.infer<typeof ChatSchema>

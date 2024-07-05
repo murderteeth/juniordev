@@ -19,7 +19,12 @@ GITHUB_PERSONAL_ACCESS_TOKEN = <get github personal access token from github.com
 bun dev
 ```
 
+### test
+```bash
+bun test
+```
+
 open telegram chat with your juniordev bot
 ```
-/jr <your juniordev request>
+/dev <your juniordev request>
 ```

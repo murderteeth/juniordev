@@ -1,5 +1,4 @@
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN ?? ''
-const PORT = 3000
 
 import { spawn } from 'child_process'
 import ngrok from 'ngrok'
@@ -30,7 +29,6 @@ async function setTelegramWebhook(url: string): Promise<void> {
 }
 
 function startNextDev(): void {
-  // const nextProcess = exec('next dev')
   const nextProcess = spawn('npx', ['next', 'dev'])
 
   nextProcess.stdout?.on('data', (data) => {
