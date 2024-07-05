@@ -17,17 +17,16 @@ GITHUB_PERSONAL_ACCESS_TOKEN = <get github personal access token from github.com
 ```
 
 ### dev env
-1 - start juniordev x ngrok proxy
 ```bash
-bun run dev:ngrok
+bun dev
 ```
 
-2 - locate ngrok's forwarding url in console out. then set your bot's webhook like this,
+### test
 ```bash
-curl -X POST https://api.telegram.org/bot{{TELEGRAM_TOKEN}}/setWebhook -H "Content-type: application/json" -d '{"url": "{{NGROK_FORWARDING_URL}}/api/telegram/hook"}'
+bun test
 ```
 
-3 - open telegram chat with your juniordev bot
+open telegram chat with your juniordev bot
 ```
-/jr <your juniordev request>
+/dev <your juniordev request>
 ```
