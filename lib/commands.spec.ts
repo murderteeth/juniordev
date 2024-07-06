@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { hasCommands, hasSimpleCommand, parseSimpleCommand } from './commands'
+import { hasCommands, hasSimpleCommand, parseSimpleCommand, trimPrefix } from './commands'
 import { MockTelegramWebHook } from './spec'
 
 test('knows if a message has commands', () => {
@@ -58,4 +58,9 @@ test('parses simple commands', () => {
   expect(parseSimpleCommand(
     MockTelegramWebHook({ text: '/jr leave' })
   )).toBe('leave')
+})
+
+test('trims command prefix', () => {
+  expect(trimPrefix('/jr i am a command')).toBe('i am a command')
+  expect(trimPrefix('/dev you are a command')).toBe('you are a command')
 })

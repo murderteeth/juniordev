@@ -120,3 +120,37 @@ export async function pullRequest({ installToken, owner, repo, base, head, title
     body: JSON.stringify({ base, head, title, body })
   })
 }
+
+export async function repoStructure(owner: string, repo: string): Promise<string> {
+  const url = `/repos/${owner}/${repo}/git/trees/main?recursive=1`
+  const data = await fetchGh('', url)
+
+  const files = data.tree.map((item: { path: string, type: string }) => ({
+    path: item.path,
+    isDirectory: item.type === 'tree',
+  }))
+
+  files.sort((a: { path: string }, b: { path: string }) => a.path.localeCompare(b.path))
+
+  let structure = ''
+  const addedDirs = new Set<string>()
+
+  for (const file of files) {
+    const parts = file.path.split('/')
+    let currentPath = ''
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]
+      currentPath += (i > 0 ? '/' : '') + part
+
+      if (i === parts.length - 1 && !file.isDirectory) {
+        structure += `${'--'.repeat(i)}- ${part}\n`
+      } else if (!addedDirs.has(currentPath)) {
+        structure += `${'--'.repeat(i)}- ${part}/\n`
+        addedDirs.add(currentPath)
+      }
+    }
+  }
+
+  return structure.trimEnd()
+}

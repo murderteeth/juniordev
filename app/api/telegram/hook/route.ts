@@ -8,6 +8,7 @@ import { getChat, upsertHooks } from '@/lib/db'
 import * as pr from './agents/pr'
 import * as setup from './agents/setup'
 import { hasCommands, handleSimpleCommand, hasSimpleCommand, parseSimpleCommand } from '@/lib/commands'
+import { simulateHookForAgent } from './agents/lib'
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN ?? '')
 
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest) {
       }
 
       if (response) {
+        chat.hooks.push(simulateHookForAgent(response))
+        await upsertHooks({ ...chat })
+
         await bot.sendMessage(
           hook.message!.chat.id.toString(), response,
           { parse_mode: 'Markdown' }
