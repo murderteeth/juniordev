@@ -3,6 +3,7 @@ import { upsertChat } from '@/lib/db'
 import { Chat, TelegramWebHook } from '@/lib/types'
 import { hasCommands } from '@/lib/commands'
 import { template } from '@/lib/template'
+import { parseMessages } from './lib'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -21,7 +22,8 @@ setup is complete when the team has identified the following,
 objective: collect this information from your teammates.
 objective: call the setup_chat tool when you have everything you need.
 constraint: your responses must be designed for Telegram. that means always KEEP IT SHORT. be a concise kitty!
-constants: chat_id = ${'chat_id'}
+
+constant chat_id = ${'chat_id'}
 `
 
 const TOOLS: OpenAI.ChatCompletionTool[] = [
@@ -108,15 +110,6 @@ async function completeUntilDone(chat: Chat) {
     steps++
   }
   return completion
-}
-
-export function parseMessages(hooks: TelegramWebHook[]) {
-  return hooks.map(hook => {
-    return {
-      role: 'user',
-      content: `[${hook.message?.from.username ?? ''}]: ${hook.message?.text.replace('/jr ', '') ?? ''}`
-    } as OpenAI.ChatCompletionMessageParam
-  })
 }
 
 export async function respond(chat: Chat) {

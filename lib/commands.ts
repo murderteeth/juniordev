@@ -60,3 +60,7 @@ export async function handleSimpleCommand(command: string, chat: Chat): Promise<
   }
   throw new Error(`Unknown command: ${command}`)
 }
+
+export function trimPrefix(message: string): string {
+  return message.replace(PREFIX_REGEX, '')
+}

@@ -1,50 +1,38 @@
-import { createCommit, fetchGhRaw, fetchInstallToken, newBranch, pullRequest } from '@/lib/gh'
+import { createCommit, fetchGhRaw, fetchInstallToken, newBranch, pullRequest, repoStructure } from '@/lib/gh'
 import OpenAI from 'openai'
 import { Chat } from '@/lib/types'
 import { hasCommands } from '@/lib/commands'
-import { parseMessages } from './setup'
+import { template } from '@/lib/template'
+import { parseMessages } from './lib'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-const SYSTEM_PROMPT = `
+const SYSTEM_PROMPT = template`
 you are juniordev, a friendly dev bot that purrs like a kitten 😻.
 you alaways keep your comments super short and sweet, moew!
 your stack of expertise is html, css, typescript, react, tailwindcss, nextjs, openai, and telegram.
-you are participating in a telegram group with a small team of devs working on a frontend app called Dummy, https://github.com/murderteeth/dummy.git.
+you are participating in a telegram group with a small team of devs working on 
+an app called ${'repo_name'}, https://github.com/${'repo_owner'}/${'repo_name'}.git.
+
 the team needs your help, juniordev!!
 
 your teammates will ask you to perform simple frontend tasks.
-to perform a simple frontend task:
-  1. decide if you can do the task or not. if you can't do the task, that's OK! but you must say so.
-  2. determine which file you need to access
-  3. read the file using the read_file tool
-  4. if the team only had questions, answer them and your done!
-  5. if the team had a task involving changes to the file, use the create_pull_request tool
-  6. update your teammates on your progress, include a link to your new pr
+here is how to perform a simple task:
+- decide if you can do the task or not
+- if you can't do the task, that's OK! but you must say so now and stop
+- determine which file you need to access
+- read the file using the read_file tool
+- if the team only had questions, answer them and your done!
+- if the team had a task involving changes to the file, use the create_pull_request tool
+- update your teammates on your progress, include a link to your new pr
 
 constraint: you have tools to help you with your tasks. you must use them, meow!
 constraint: you are only a juniordev! for now you can only change one file at a time. 
 constraint: you should only accept tasks that involve one file at a time.
 constraint: your responses must be designed for Telegram. that means always KEEP IT SHORT. be a concise kitty!
 
-ps. to help you get started, here is dummy.git's current project structure,
-- app/
--- favicon.ico
--- globals.css
--- layout.tsx
--- page.tsx
-- public/
--- next.svg
--- vercel.svg
-- .eslintrc.json
-- .gitignore
-- README.md
-- bun.lockb
-- next.config.mjs
-- package.json
-- postcss.config.mjs
-- tailwind.config.ts
-- tsconfig.json
+ps. to help you get started, here is ${'repo_name'}.git's current project structure,
+${'repo_structure'}
 `
 
 const TOOLS: OpenAI.ChatCompletionTool[] = [
@@ -52,10 +40,18 @@ const TOOLS: OpenAI.ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'read_file',
-      description: 'takes a path and returns content of a file in the github repo at https://github.com/murderteeth/dummy.git',
+      description: 'returns the contents of a file for the given githib repo and path',
       parameters: {
         type: 'object',
         properties: {
+          repo_owner: {
+            type: 'string',
+            description: 'owner of the github repo'
+          },
+          repo_name: {
+            type: 'string',
+            description: 'name of the github repo'
+          },
           path: {
             type: 'string',
             description: 'relative path to file in github repo'
@@ -65,14 +61,23 @@ const TOOLS: OpenAI.ChatCompletionTool[] = [
       },
     }
   },
+
   {
     type: 'function',
     function: {
       name: 'create_pull_request',
-      description: 'takes a path and a string containing file contents. returns a link to a pull request on a github repo at https://github.com/murderteeth/dummy.git',
+      description: 'creates a new pull request for the given github repo, content, and path',
       parameters: {
         type: 'object',
         properties: {
+          repo_owner: {
+            type: 'string',
+            description: 'owner of the github repo'
+          },
+          repo_name: {
+            type: 'string',
+            description: 'name of the github repo'
+          },
           path: {
             type: 'string',
             description: 'relative path to file in github repo'
@@ -93,15 +98,15 @@ const HANDLERS: {
 } = {
   'read_file': async (params: Record<string, string>) => {
     return await fetchGhRaw({
-      owner: 'murderteeth',
-      repo: 'dummy',
+      owner: params.repo_owner,
+      repo: params.repo_name,
       path: params.path
     })
   },
 
   'create_pull_request': async (params: Record<string, string>) => {
-    const owner = 'murderteeth'
-    const repo = 'dummy'
+    const owner = params.repo_owner
+    const repo = params.repo_name
     const base = 'main'
     const branch = `juniordev-${Date.now()}`
     const installToken = await fetchInstallToken()
@@ -118,10 +123,16 @@ const HANDLERS: {
   }
 }
 
-async function complete(messages: OpenAI.ChatCompletionMessageParam[]) {
+async function complete(chat: Chat, messages: OpenAI.ChatCompletionMessageParam[]) {
+  const systemPrompt = SYSTEM_PROMPT({
+    repo_owner: chat.github_repo_owner!,
+    repo_name: chat.github_repo_name!,
+    repo_structure: await repoStructure(chat.github_repo_owner!, chat.github_repo_name!)
+  })
+
   const completion = await openai.chat.completions.create({
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       ...messages
     ],
     tools: TOOLS,
@@ -136,7 +147,7 @@ async function completeUntilDone(chat: Chat) {
   console.log('messages', messages)
 
   let steps = 0
-  let completion = await complete(messages)
+  let completion = await complete(chat, messages)
   while (completion.finish_reason === 'tool_calls') {
     console.log('COMPLETE', 'steps', steps)
     if (steps >= MAX_TOOL_STEPS) { throw new Error('a step too far!') }
@@ -156,7 +167,7 @@ async function completeUntilDone(chat: Chat) {
       tool_calls: completion.message.tool_calls
     }, ...tool_responses]
 
-    completion = await complete(messages)
+    completion = await complete(chat, messages)
     steps++
   }
 

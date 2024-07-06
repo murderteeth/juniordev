@@ -1,6 +1,6 @@
 import { TelegramWebHook } from '@/lib/types'
 import { expect, test } from 'bun:test'
-import { parseMessages } from './setup'
+import { parseMessages, simulateHookForAgent } from './lib'
 
 test('parses TelegramWebHook[] into message stream', () => {
   const hooks: TelegramWebHook[] = [
@@ -45,12 +45,14 @@ test('parses TelegramWebHook[] into message stream', () => {
         date: 2n,
         text: 'laters'
       }
-    }
+    },
+    simulateHookForAgent('MEEEEEOWWW Folks!! 😸')
   ]
 
   const messages = parseMessages(hooks)
   expect(Bun.deepEquals(messages, [
     { role: 'user', content: '[john_doe]: howdy junior dev!!' },
-    { role: 'user', content: '[jane_doe]: laters' }
+    { role: 'user', content: '[jane_doe]: laters' },
+    { role: 'assistant', content: 'MEEEEEOWWW Folks!! 😸' }
   ])).toBeTrue()
 })
