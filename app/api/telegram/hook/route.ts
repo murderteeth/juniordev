@@ -18,7 +18,7 @@ function readyToGo(chat: Chat) {
 
 export async function POST(request: NextRequest) {
   const hook = TelegramWebHookSchema.parse(await request.json())
-  if (!hook.message) { return NextResponse.json({ ok: 'ok' }) }
+  if (!hook.message?.text) { return NextResponse.json({ ok: 'ok' }) }
 
   if (hasCommands(hook)) {
     await bot.sendChatAction(hook.message.chat.id.toString(), 'typing')

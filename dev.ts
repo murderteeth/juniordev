@@ -1,3 +1,8 @@
+// This script sets up a dev environment for a Telegram bot using Next.js and ngrok. 
+// It starts an ngrok tunnel, sets a Telegram webhook using the ngrok URL, and launches 
+// the Next.js development server. The main function orchestrates these steps, enabling local 
+// development and testing of the Telegram bot.
+
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN ?? ''
 
 import { spawn } from 'child_process'

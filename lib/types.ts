@@ -11,12 +11,13 @@ export const TelegramMessageSchema = z.object({
   }),
   chat: z.object({
     id: z.bigint({ coerce: true }),
-    first_name: z.string(),
-    username: z.string(),
+    first_name: z.string().optional(),
+    username: z.string().optional(),
+    title: z.string().optional(),
     type: z.string(),
   }),
-  date: z.bigint({ coerce: true }),
-  text: z.string()
+  date: z.bigint({ coerce: true }).optional(),
+  text: z.string().optional()
 })
 
 export const TelegramWebHookSchema = z.object({

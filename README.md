@@ -6,7 +6,7 @@ Telegram dev bot for all your dirty work
 ### setup
 1 - install
 ```bash
-bun install
+bun i
 ```
 
 2 - config
