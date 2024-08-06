@@ -49,7 +49,8 @@ export function hasSimpleCommand(hook: TelegramWebHook): boolean {
 }
 
 export function parseSimpleCommand(hook: TelegramWebHook): string | undefined {
-  const match = hook.message?.text.match(SIMPLE_COMMAND_REGEX)
+  if (!hook.message?.text) return undefined
+  const match = hook.message.text.match(SIMPLE_COMMAND_REGEX)
   return match ? match[2] : undefined
 }
 
