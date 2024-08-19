@@ -4,6 +4,7 @@ import { Chat } from '@/lib/types'
 import { hasCommands } from '@/lib/commands'
 import { template } from '@/lib/template'
 import { parseMessages } from './lib'
+import { truncate } from '@/lib/strings'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -22,8 +23,11 @@ here is how to perform a simple task:
 - if you can't do the task, that's OK! but you must say so now and stop
 - determine which file you need to access
 - read the file using the read_file tool
-- if the team only had questions, answer them and your done!
+- if the team only had questions, answer them and you're done!
 - if the team had a task involving changes to the file, use the create_pull_request tool
+  - provide a brief commit_message describing the changes
+  - provide a concise pr_title summarizing the pull request
+  - provide a detailed pr_body explaining the changes and their purpose
 - update your teammates on your progress, include a link to your new pr
 
 constraint: you have tools to help you with your tasks. you must use them, meow!
@@ -86,8 +90,20 @@ const TOOLS: OpenAI.ChatCompletionTool[] = [
             type: 'string',
             description: 'new content for the file being changed'
           },
+          commit_message: {
+            type: 'string',
+            description: 'brief description of the changes made'
+          },
+          pr_title: {
+            type: 'string',
+            description: 'title for the pull request'
+          },
+          pr_body: {
+            type: 'string',
+            description: 'detailed description of the changes for the pull request'
+          }
         },
-        required: ['path', 'content']
+        required: ['path', 'content', 'commit_message', 'pr_title', 'pr_body']
       },
     }
   }
@@ -111,15 +127,35 @@ const HANDLERS: {
     const branch = `juniordev-${Date.now()}`
     const installToken = await fetchInstallToken()
     await newBranch({ installToken, owner, repo, base, name: branch })
-    await createCommit({ installToken, owner, repo, branch, message: 'juniordev meow meow', files: [
-      { path: params.path, content: params.content }
-    ] })
+    
+    const commitMessage = `😺 ${truncate(params.commit_message, 50)}`
+    await createCommit({ 
+      installToken, 
+      owner, 
+      repo, 
+      branch, 
+      message: commitMessage, 
+      files: [{ path: params.path, content: params.content }]
+    })
+    
+    const prTitle = `🐱 ${truncate(params.pr_title, 60)}`
+    const prBody = `😻 Meow! Here's what I did:
+
+${params.pr_body}
+
+Purrs and headbutts,
+JuniorDev 🐾`
+
     const pr = await pullRequest({ 
-      installToken, owner, repo, base, head: branch, 
-      title: 'juniordev meow meow', body: '😻 juniordev meow meow 😻'
+      installToken, 
+      owner, 
+      repo, 
+      base, 
+      head: branch, 
+      title: prTitle, 
+      body: prBody
     })
     return pr.html_url
-
   }
 }
 
